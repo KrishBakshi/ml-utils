@@ -39,7 +39,7 @@ APPS = load_apps_from_config()
 def render_home():
     """Renders the static home content."""
     gr.Markdown("# ML Utils")
-    gr.Markdown("*Machine Learning Utilities and Visualization Tools*")
+    gr.Markdown("*Machine Learning Utilities and Visualization Tools. Made by [Krish Bakshi](https://www.krishb.tech)*")
     gr.Markdown("---")
     gr.Markdown("### Welcome!")
     gr.Markdown("Use the sidebar to navigate to different tools.")

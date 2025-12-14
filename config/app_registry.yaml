@@ -3,6 +3,14 @@
   id: home
   type: builtin
 
-- name: Image Data Plot
+- name: Yolo - Image Data Plot
   id: image_data_plot
   import_path: src.image_data_plot.app
+
+- name: Yolo - Image Data Transformer
+  id: image_data_transformer
+  import_path: src.image_data_transformer.app
+
+- name: Yolo - Image Data Train Test Split
+  id: image_data_train_test_split
+  import_path: src.image_data_train_test_split.app
