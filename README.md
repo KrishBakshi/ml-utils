@@ -55,7 +55,7 @@ Train YOLO models using the [Ultralytics](https://docs.ultralytics.com/) library
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ml-utils.git
+git clone https://github.com/KrishBakshi/yolo-ml-utils.git
 cd ml-utils
 ```
 
