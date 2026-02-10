@@ -183,8 +183,22 @@ def process_bbox_aug(zip_file, input_path, angles, keep_original, progress=gr.Pr
             extract_dir = tempfile.mkdtemp()
             with zipfile.ZipFile(zip_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
+            
+            # Look for images directory - check root first, then nested folders
             images_dir = os.path.join(extract_dir, "images")
             labels_dir = os.path.join(extract_dir, "labels")
+            
+            # If not found at root, search for nested structure (e.g., zip contains a parent folder)
+            if not os.path.exists(images_dir):
+                for item in os.listdir(extract_dir):
+                    item_path = os.path.join(extract_dir, item)
+                    if os.path.isdir(item_path):
+                        potential_images = os.path.join(item_path, "images")
+                        potential_labels = os.path.join(item_path, "labels")
+                        if os.path.exists(potential_images):
+                            images_dir = potential_images
+                            labels_dir = potential_labels
+                            break
         else:
             # Handle directory path
             input_path = input_path.strip()
@@ -199,10 +213,14 @@ def process_bbox_aug(zip_file, input_path, angles, keep_original, progress=gr.Pr
         
         if not os.path.exists(images_dir):
             if extract_dir:
+                found_items = os.listdir(extract_dir)
                 shutil.rmtree(extract_dir)
             shutil.rmtree(temp_dir)
             input_type = "ZIP file" if is_zip else "directory"
-            return [], f"Error: 'images' directory not found in {input_type}", None
+            error_msg = f"Error: 'images' directory not found in {input_type}"
+            if is_zip and found_items:
+                error_msg += f"\n\nFound in ZIP root: {', '.join(found_items)}\n\nExpected structure:\n  images/\n  labels/"
+            return [], error_msg, None
         if not os.path.exists(labels_dir):
             if extract_dir:
                 shutil.rmtree(extract_dir)

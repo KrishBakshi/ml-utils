@@ -133,8 +133,23 @@ def process_detection_zip(zip_file, input_path, progress=gr.Progress(track_tqdm=
             extract_dir = tempfile.mkdtemp()
             with zipfile.ZipFile(zip_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
+            
+            # Look for images directory - check root first, then nested folders
             images_dir = os.path.join(extract_dir, "images")
             labels_dir = os.path.join(extract_dir, "labels")
+            
+            # If not found at root, search for nested structure (e.g., zip contains a parent folder)
+            if not os.path.exists(images_dir):
+                # List directories in extract_dir
+                for item in os.listdir(extract_dir):
+                    item_path = os.path.join(extract_dir, item)
+                    if os.path.isdir(item_path):
+                        potential_images = os.path.join(item_path, "images")
+                        potential_labels = os.path.join(item_path, "labels")
+                        if os.path.exists(potential_images):
+                            images_dir = potential_images
+                            labels_dir = potential_labels
+                            break
         else:
             # Handle directory path
             input_path = input_path.strip()
@@ -149,10 +164,15 @@ def process_detection_zip(zip_file, input_path, progress=gr.Progress(track_tqdm=
         
         if not os.path.exists(images_dir):
             if extract_dir:
+                # List what was found in the ZIP for debugging
+                found_items = os.listdir(extract_dir)
                 shutil.rmtree(extract_dir)
             shutil.rmtree(temp_dir)
             input_type = "ZIP file" if is_zip else "directory"
-            return [], f"Error: 'images' directory not found in {input_type}", None
+            error_msg = f"Error: 'images' directory not found in {input_type}"
+            if is_zip and found_items:
+                error_msg += f", file path: '{zip_file}'\n\nFound in ZIP root: {', '.join(found_items)}\n\nExpected structure:\n  images/\n  labels/\n  classes.txt (optional)"
+            return [], error_msg, None
         if not os.path.exists(labels_dir):
             if extract_dir:
                 shutil.rmtree(extract_dir)
@@ -160,9 +180,11 @@ def process_detection_zip(zip_file, input_path, progress=gr.Progress(track_tqdm=
             input_type = "ZIP file" if is_zip else "directory"
             return [], f"Error: 'labels' directory not found in {input_type}", None
         
-        # Look for classes.txt in the extracted directory
+        # Look for classes.txt in the data directory (parent of images/labels)
         if is_zip:
-            classes_file = os.path.join(extract_dir, "classes.txt")
+            # classes.txt should be in the same directory as images/ and labels/
+            data_root = os.path.dirname(images_dir)
+            classes_file = os.path.join(data_root, "classes.txt")
         else:
             classes_file = os.path.join(input_path, "classes.txt")
         

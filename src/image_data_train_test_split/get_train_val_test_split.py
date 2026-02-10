@@ -58,6 +58,16 @@ def split_train_val_test(zip_file, input_path, train_ratio=0.7, val_ratio=0.2, t
             with zipfile.ZipFile(zip_file, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)
             source_dir = extract_dir
+            
+            # Check if images/labels are at root, otherwise look for nested folder
+            if not os.path.isdir(os.path.join(source_dir, "images")):
+                for item in os.listdir(extract_dir):
+                    item_path = os.path.join(extract_dir, item)
+                    if os.path.isdir(item_path):
+                        potential_images = os.path.join(item_path, "images")
+                        if os.path.isdir(potential_images):
+                            source_dir = item_path
+                            break
         else:
             input_path = input_path.strip()
             if not os.path.isdir(input_path):
@@ -71,9 +81,13 @@ def split_train_val_test(zip_file, input_path, train_ratio=0.7, val_ratio=0.2, t
         
         if not os.path.isdir(images_dir):
             if extract_dir:
+                found_items = os.listdir(extract_dir)
                 shutil.rmtree(extract_dir)
             shutil.rmtree(output_dir)
-            return None, "Error: 'images' directory not found", None
+            error_msg = "Error: 'images' directory not found"
+            if is_zip and found_items:
+                error_msg += f"\n\nFound in ZIP root: {', '.join(found_items)}\n\nExpected structure:\n  images/\n  labels/"
+            return None, error_msg, None
         
         if not os.path.isdir(labels_dir):
             if extract_dir:
