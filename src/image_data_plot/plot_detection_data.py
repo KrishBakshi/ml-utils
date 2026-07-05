@@ -70,7 +70,7 @@ def plot_yolo(image_path, label_path, output_path, class_names=None):
                         h_px = h * height
                         
                         rect = patches.Rectangle((x1, y1), w_px, h_px, 
-                                               linewidth=0.8, 
+                                               linewidth=0.5, 
                                                edgecolor=color_rgb, 
                                                facecolor='none')
                         ax.add_patch(rect)
