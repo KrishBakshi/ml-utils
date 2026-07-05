@@ -5,9 +5,25 @@ import yaml
 import random
 import sys
 import io
+import tempfile
 from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
 from ultralytics import YOLO
+
+
+def _copy_for_gradio_download(file_path):
+    """Copy a file into the system temp dir so Gradio can safely serve it."""
+    if not file_path:
+        return None
+
+    source = Path(file_path)
+    if not source.exists() or not source.is_file():
+        return None
+
+    temp_dir = Path(tempfile.mkdtemp(prefix="gradio_download_"))
+    cached_path = temp_dir / source.name
+    shutil.copy2(source, cached_path)
+    return str(cached_path)
 
 def create_train_val_split(data_path, val_ratio, output_dir, seed=42):
     """
@@ -202,7 +218,8 @@ def create_yaml_file(split_folder_path, class_names_str, yaml_filename):
             names_str = ', '.join([f"'{name}'" for name in class_names])
             f.write(f"names: [{names_str}]\n")
         
-        return f"Success! Created YAML file: {yaml_path}\nClasses: {', '.join(class_names)}{source_info}", str(yaml_path)
+        download_path = _copy_for_gradio_download(yaml_path)
+        return f"Success! Created YAML file: {yaml_path}\nClasses: {', '.join(class_names)}{source_info}", download_path
     
     except Exception as e:
         return f"Error: {str(e)}", None
@@ -527,4 +544,3 @@ with gr.Blocks(title="YOLO Training Utility") as demo:
 
 if __name__ == "__main__":
     demo.launch(share=False)
-
